@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script type="module" src="https://md-block.verou.me/md-block.js"></script>
+    <title>Chat with Person 2</title>
+    <style>
+      body {
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+          align-items: center;
+          font-family: Arial, sans-serif;
+          margin: 0;
+          padding: 0;
+          height: 100vh;
+          background-color: #f1f1f1;
+          box-sizing: border-box;
+      }
+      #chatContainer {
+          width: 60%;
+          height: 80%;
+          border: 1px solid #4285F4;
+          display: flex;
+          flex-direction: column;
+          overflow-y: auto;
+          padding: 20px;
+          box-sizing: border-box;
+          background-color: white;
+          box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+          border-radius: 5px;
+      }
+      .loading {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-style: italic;
+      }
+      .message {
+          margin-bottom: 10px;
+      }
+      .person1 {
+          align-self: flex-start;
+          background-color: #e7f0fe;
+          padding: 10px;
+          border-radius: 5px;
+      }
+      .person2 {
+          align-self: flex-end;
+          background-color: #4285F4;
+          padding: 10px;
+          border-radius: 5px;
+          color: white;
+      }
+      img.animated-gif{
+        width: 120px;
+        height: auto;
+      }
+      #inputForm {
+          display: flex;
+          width: 60%;
+          justify-content: center;
+          margin-top: 10px;
+      }
+      #inputMessage {
+          flex-grow: 1;
+          margin-right: 10px;
+          border: 1px solid #4285F4;
+          border-radius: 5px;
+          padding: 5px;
+          outline: none;
+      }
+      button {
+          background-color: #4285F4;
+          border: none;
+          margin-right: 10px;
+          padding: 8px 15px;
+          color: white;
+          font-size: 14px;
+          cursor: pointer;
+          border-radius: 5px;
+          outline: none;
+          transition: background-color 0.3s;
+      }
+      button:hover {
+          background-color: #2b6ed8;
+      }
+  </style>
+</head>
+<body>
+    <div id="chatContainer">
+        <!-- Messages will be displayed here -->
+    </div>
+    <form id="inputForm">
+        <input type="text" id="inputMessage" placeholder="Type your message...">
+        <button type="submit">Send</button>
+        <button id="cleanChat">Clean Chat</button>
+    </form>
+
+    <script type="module">
+        const server_url = "http://localhost:8080";
+        let conversationData;
+
+        async function clearChat() {
+          const chatContainer = document.getElementById("chatContainer");
+          chatContainer.innerHTML = "";
+          await initialize();
+        }
+
+        async function createConversation() {
+            const response = await fetch(`${server_url}/create-conversation`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+            });
+
+            if (response.ok) {
+                conversationData = await response.json();
+            } else {
+                console.error("Error creating conversation:", response.statusText);
+            }
+        }
+
+        function displayMessage(message, personClass, loading = false) {
+          const chatContainer = document.getElementById("chatContainer");
+          const messageDiv = document.createElement("div");
+          messageDiv.classList.add("message", personClass);
+          if (loading) {
+            messageDiv.classList.add("loading");
+            messageDiv.innerHTML = `<img class="animated-gif" src="loading.gif" alt="Loading...">`;
+          } else {
+            if (personClass == "person2") {
+              chatContainer.removeChild(chatContainer.lastChild);
+            }
+            const mdDiv = document.createElement("md-block");
+            mdDiv.innerText = message;
+            messageDiv.appendChild(mdDiv);
+          }
+          chatContainer.appendChild(messageDiv);
+          chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        async function initialize() {
+            await createConversation();
+
+            document.getElementById("inputForm").addEventListener("submit", async (event) => {
+                event.preventDefault();
+                const inputMessage = document.getElementById("inputMessage");
+                const message = inputMessage.value.trim();
+                if (!message) return;
+                displayMessage(message, "person1");
+                inputMessage.value = "";
+
+                displayMessage("", "person2", true);
+                const responseMessage = await callAPI(message);
+                displayMessage(responseMessage, "person2");
+            });
+
+            document.getElementById("cleanChat").addEventListener("click", async (event) => {
+                event.preventDefault();
+                await clearChat();
+            });
+            
+            displayMessage("", "person2", true);
+            
+            const responseMessage = await callAPI(`Start the conversation with "Hello! how may i help you (* ^ ω ^)?"`);
+
+            displayMessage(responseMessage, "person2");
+        }
+
+        function sanitizeOutput(message) {
+          let sanitizedText = message;
+
+          // sanitizedText = sanitizedText.replaceAll(/\*\*(.*?)\*\*/g, '$1')
+          sanitizedText = sanitizedText.replaceAll(/\[\^(.*?)\^\]/g, '');
+
+          return sanitizedText
+        }
+
+        async function callAPI(message) {
+            delete conversationData['conversationPath'];
+            conversationData["text"] = message
+
+            console.log(conversationData)
+            
+            const url = `${server_url}/generate`;
+            const searchParams = new URLSearchParams(conversationData).toString();
+            const requestUrl = `${url}?${searchParams}`;
+
+            try {
+              const response = await fetch(requestUrl);
+              
+              if (response.ok) {
+                const data = await response.text();
+                const linesArray = data.split(/\r?\n/).filter(line => line.trim() !== '');
+
+                const secondToLast = sanitizeOutput(linesArray[linesArray.length - 2]);
+
+                console.log(secondToLast.replaceAll("data: ", "").replaceAll("[NEXTLINE]",""));
+                return(secondToLast.replaceAll("data: ", "").replaceAll("[NEXTLINE]",""))
+              } else {
+                console.error('Error:', response.statusText);
+                return("Error encountered");
+              }
+            } catch (error) {
+              console.error('Fetch error:', error);
+              return("Error encountered");
+            }  
+
+        }
+
+        await initialize()
+    </script>
+</body>
+</html>
