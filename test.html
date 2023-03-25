@@ -4,8 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script type="module" src="https://md-block.verou.me/md-block.js"></script>
-    <title>Chat with Person 2</title>
+    <title>Bing Chatbot API Test</title>
     <style>
+      h1 {
+        color: blue;
+        font-size: 22px;
+        font-weight: bold;
+        margin-top: 20px;
+        margin-bottom: 20px;
+      }
       body {
           display: flex;
           flex-direction: column;
@@ -43,18 +50,19 @@
       .person1 {
           align-self: flex-start;
           background-color: #e7f0fe;
-          padding: 10px;
+          padding-right: 10px;
           border-radius: 5px;
       }
       .person2 {
           align-self: flex-end;
           background-color: #4285F4;
-          padding: 10px;
+          padding-left: 10px;
           border-radius: 5px;
           color: white;
       }
       img.animated-gif{
-        width: 120px;
+        width: 100px;
+        background-color: #2b6ed8;
         height: auto;
       }
       #inputForm {
@@ -89,6 +97,7 @@
   </style>
 </head>
 <body>
+    <h1>Bing Chatbot API Test!</h1>
     <div id="chatContainer">
         <!-- Messages will be displayed here -->
     </div>
