@@ -99,7 +99,7 @@
     </form>
 
     <script type="module">
-        const server_url = "https://happy-geckos-jog-36-79-195-32.loca.lt";
+        const server_url = "https://bingchat-api-zmtik7wuba-et.a.run.app";
         let conversationData;
         console.log(server_url)
 
@@ -114,6 +114,8 @@
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
+                    "Bypass-Tunnel-Reminder": "",
+                    "Origin": server_url
                 },
             });
 
@@ -191,7 +193,13 @@
             const requestUrl = `${url}?${searchParams}`;
 
             try {
-              const response = await fetch(requestUrl);
+              const response = await fetch(requestUrl, {
+                    method: "GET",
+                    headers: {
+                        "Bypass-Tunnel-Reminder": "",
+                        "Origin": 'https://rayzamgh.github.io/'
+                    },
+                });
               
               if (response.ok) {
                 const data = await response.text();
